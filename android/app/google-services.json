@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "891340777842",
+    "project_id": "raksha-setu-324f3",
+    "storage_bucket": "raksha-setu-324f3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:891340777842:android:ddc675cd08217f214155eb",
+        "android_client_info": {
+          "package_name": "com.example.raksha_setu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAX-oKAODkZtal81BhCsFLyb3pp4nU5t7Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
