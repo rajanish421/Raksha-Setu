@@ -42,6 +42,14 @@ android {
     }
 }
 
+dependencies {
+    // Firebase BoM controls versions
+    implementation(platform("com.google.firebase:firebase-bom:34.6.0"))
+    // Firebase Auth
+    implementation("com.google.firebase:firebase-auth")
+    // Optionally add any other Firebase SDKs here
+}
+
 flutter {
     source = "../.."
 }
