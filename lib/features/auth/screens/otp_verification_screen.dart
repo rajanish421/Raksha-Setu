@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../custom_widgets/primary_button.dart';
+import '../../../providers/user_provider.dart';
 import '../../../utils/route_names.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_otp_service.dart';
@@ -106,9 +108,13 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       } else if (user.status == 'approved') {
         // Later we will show Home (Group list).
         // For now, route to Splash or some placeholder.
+
+        await Provider.of<UserProvider>(context, listen: false).loadUser();   // load user
+
+
         Navigator.pushNamedAndRemoveUntil(
           context,
-          RouteNames.splash,
+          RouteNames.home,
               (route) => false,
         );
       } else if (user.status == 'rejected' || user.status == 'suspended') {
@@ -125,6 +131,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         );
       }
     } catch (e) {
+      print("error from otp screen --------- ${e.toString()}");
       _showMsg(e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);

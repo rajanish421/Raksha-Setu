@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:raksha_setu/features/home/screens/home_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/otp_verification_screen.dart';
 import '../features/auth/screens/pending_approval_screen.dart';
@@ -23,9 +24,12 @@ class AppRouter {
       case RouteNames.register:
         return _buildRoute(const RegisterScreen(), settings);
 
+
+      case RouteNames.home:
+        return _buildRoute(const HomeScreen(), settings);
+
       case RouteNames.otpVerification:
         final args = settings.arguments as Map<String, dynamic>?;
-
         return _buildRoute(
           OtpVerificationScreen(
             verificationId: args?['verificationId'] as String? ?? '',

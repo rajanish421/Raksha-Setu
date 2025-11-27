@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../../log_service.dart';
 import '../../../models/user_model.dart';
 
 
@@ -96,6 +97,16 @@ class AuthService {
           .doc(uid)
           .set(userModel.toMap());
 
+
+      // log added
+      await LogService.logUserAction(
+        action: 'register',
+        uid: uid,
+        name: fullName,
+        role: role,
+      );
+
+
       return userModel;
     } on FirebaseAuthException catch (e) {
       // Convert FirebaseAuthException to user-friendly messages
@@ -152,8 +163,23 @@ class AuthService {
       final data = doc.data()!;
       final userModel = UserModel.fromMap(data);
 
+      // Log successful login
+      await LogService.logUserAction(
+        action: 'login',
+        uid: userModel.userId,
+        name: userModel.fullName,
+        role: userModel.role,
+      );
+
+
       return userModel;
     } on FirebaseAuthException catch (e) {
+
+      await LogService.logUserAction(
+        action: 'failed_login',
+        meta: {'identifier': identifier, 'reason': e.code},
+      );
+
       String message = 'Login failed';
       if (e.code == 'wrong-password') {
         message = 'Incorrect password.';
@@ -225,8 +251,13 @@ class AuthService {
 
   /// Sign out
   Future<void> signOut() async {
+    try {
+      await LogService.logUserAction(action: 'logout');
+    } catch (_) {}
+
     await _auth.signOut();
   }
+
 }
 
 /// Internal helper for lookup
