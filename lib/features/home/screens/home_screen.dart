@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:raksha_setu/test.dart';
 
 import '../../../constants/app_colors.dart';
+import '../../call/services/call_service.dart';
 import '../../chat/screens/groups_list_screen.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -20,8 +22,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    _listenAlerts();
+    // CallService.instance.initZego();
+    // CallService.instance.listenIncomingCalls(uid);
   }
+
 
   void _listenAlerts() {
     FirebaseFirestore.instance
@@ -52,34 +56,38 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: AppColors.primary,
         title: const Text("Defence Network", style: TextStyle(fontWeight: FontWeight.w700)),
         actions: [
+
+          IconButton(onPressed: (){
+            Navigator.push(context, MaterialPageRoute(builder: (context) => VoiceTestScreen(),));
+          }, icon: Icon(Icons.ice_skating_outlined)),
           // Alerts Icon with Badge 👇
           Stack(
             children: [
-              IconButton(
-                icon: const Icon(Icons.notifications),
-                onPressed: () {
-                  // Navigator.push(
-                  //   context,
-                  //   MaterialPageRoute(builder: (_) => const AlertsListScreen()),
-                  // );
-                },
-              ),
-              if (alertCount > 0)
-                Positioned(
-                  right: 8,
-                  top: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.red,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      alertCount.toString(),
-                      style: const TextStyle(color: Colors.white, fontSize: 10),
-                    ),
-                  ),
-                ),
+              // IconButton(
+              //   icon: const Icon(Icons.notifications),
+              //   onPressed: () {
+              //     // Navigator.push(
+              //     //   context,
+              //     //   MaterialPageRoute(builder: (_) => const VoiceTestScreen()),
+              //     // );
+              //   },
+              // ),
+              // if (alertCount > 0)
+              //   Positioned(
+              //     right: 8,
+              //     top: 8,
+              //     child: Container(
+              //       padding: const EdgeInsets.all(4),
+              //       decoration: const BoxDecoration(
+              //         color: Colors.red,
+              //         shape: BoxShape.circle,
+              //       ),
+              //       child: Text(
+              //         alertCount.toString(),
+              //         style: const TextStyle(color: Colors.white, fontSize: 10),
+              //       ),
+              //     ),
+              //   ),
             ],
           ),
 

@@ -1,25 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum MessageType { text, image, document, voice, system }
 
-enum MessageType {
-  text,
-  image,
-  file,
-  voice,
-  system, // announcements / pinned / alerts
-}
-
-MessageType messageTypeFromString(String value) {
+MessageType messageTypeFrom(String? value) {
   switch (value) {
     case 'image':
       return MessageType.image;
-    case 'file':
-      return MessageType.file;
+    case 'document':
+      return MessageType.document;
     case 'voice':
       return MessageType.voice;
     case 'system':
       return MessageType.system;
-    case 'text':
     default:
       return MessageType.text;
   }
@@ -29,116 +21,165 @@ String messageTypeToString(MessageType type) {
   switch (type) {
     case MessageType.image:
       return 'image';
-    case MessageType.file:
-      return 'file';
+    case MessageType.document:
+      return 'document';
     case MessageType.voice:
       return 'voice';
     case MessageType.system:
       return 'system';
-    case MessageType.text:
     default:
       return 'text';
   }
 }
 
 class MessageModel {
-  final String messageId;
+  final String id;
   final String groupId;
   final String senderId;
   final String senderName;
-  final String senderRole; // soldier / officer / family / admin (for system)
+  final String senderRole;
+
   final MessageType type;
-  final String? content; // text content
-  final String? fileUrl; // image/pdf/voice url (later Firebase Storage)
-  final bool isEncrypted; // for SIH pitch (logical flag)
+  final String? text;
+
+  // Attachments
+  final String? fileUrl;
+  final String? fileName;
+  final int? fileSize;
+  final String? thumbUrl; // Image thumbnail later if needed
+
+  // Reply threading
+  final String? replyToMessageId;
+  final String? replySnippet; // small preview in bubble
+
+  // Encryption & Security
+  final bool isEncrypted;
+  final bool restrictShare; // no export, no forward
+
+  // Delivery & Read
+  final List<String> deliveredTo;
+  final List<String> seenBy;
+
+  // Time
   final DateTime createdAt;
-  final List<String> readBy; // userIds who read
-  final DateTime? deletedAt; // for retention policies
+  final DateTime? deletedAt;
 
   MessageModel({
-    required this.messageId,
+    required this.id,
     required this.groupId,
     required this.senderId,
     required this.senderName,
     required this.senderRole,
     required this.type,
-    required this.content,
+    required this.text,
     required this.fileUrl,
+    required this.fileName,
+    required this.fileSize,
+    required this.thumbUrl,
+    required this.replyToMessageId,
+    required this.replySnippet,
     required this.isEncrypted,
+    required this.restrictShare,
+    required this.deliveredTo,
+    required this.seenBy,
     required this.createdAt,
-    required this.readBy,
     required this.deletedAt,
   });
 
-  Map<String, dynamic> toMap() {
-    return {
-      'messageId': messageId,
-      'groupId': groupId,
-      'senderId': senderId,
-      'senderName': senderName,
-      'senderRole': senderRole,
-      'type': messageTypeToString(type),
-      'content': content,
-      'fileUrl': fileUrl,
-      'isEncrypted': isEncrypted,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'readBy': readBy,
-      'deletedAt': deletedAt != null ? Timestamp.fromDate(deletedAt!) : null,
-    };
-  }
-
   factory MessageModel.fromDoc(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
+
     return MessageModel(
-      messageId: data['messageId'] ?? doc.id,
+      id: doc.id,
       groupId: data['groupId'] ?? '',
       senderId: data['senderId'] ?? '',
       senderName: data['senderName'] ?? '',
       senderRole: data['senderRole'] ?? '',
-      type: messageTypeFromString(data['type'] ?? 'text'),
-      content: data['content'],
+
+      type: messageTypeFrom(data['type']),
+
+      text: data['text'],
+
       fileUrl: data['fileUrl'],
-      isEncrypted: data['isEncrypted'] ?? false,
-      createdAt: _parseDate(data['createdAt']),
-      readBy: List<String>.from(data['readBy'] ?? const <String>[]),
-      deletedAt: data['deletedAt'] != null ? _parseDate(data['deletedAt']) : null,
+      fileName: data['fileName'],
+      fileSize: data['fileSize'],
+      thumbUrl: data['thumbUrl'],
+
+      replyToMessageId: data['replyToMessageId'],
+      replySnippet: data['replySnippet'],
+
+      isEncrypted: data['isEncrypted'] ?? true,
+      restrictShare: data['restrictShare'] ?? true,
+
+      deliveredTo: List<String>.from(data['deliveredTo'] ?? []),
+      seenBy: List<String>.from(data['seenBy'] ?? []),
+
+      createdAt: _parse(data['createdAt']),
+      deletedAt: data['deletedAt'] != null ? _parse(data['deletedAt']) : null,
     );
   }
 
-  static DateTime _parseDate(dynamic value) {
-    if (value == null) return DateTime.now().toUtc();
-    if (value is Timestamp) return value.toDate();
-    if (value is DateTime) return value;
-    return DateTime.tryParse(value.toString()) ?? DateTime.now().toUtc();
+  Map<String, dynamic> toMap() {
+    return {
+      "groupId": groupId,
+      "senderId": senderId,
+      "senderName": senderName,
+      "senderRole": senderRole,
+
+      "type": messageTypeToString(type),
+      "text": text,
+
+      "fileUrl": fileUrl,
+      "fileName": fileName,
+      "fileSize": fileSize,
+      "thumbUrl": thumbUrl,
+
+      "replyToMessageId": replyToMessageId,
+      "replySnippet": replySnippet,
+
+      "isEncrypted": isEncrypted,
+      "restrictShare": restrictShare,
+
+      "deliveredTo": deliveredTo,
+      "seenBy": seenBy,
+
+      "createdAt": Timestamp.fromDate(createdAt),
+      "deletedAt": deletedAt != null ? Timestamp.fromDate(deletedAt!) : null,
+    };
+  }
+
+  static DateTime _parse(dynamic v) {
+    if (v == null) return DateTime.now();
+    if (v is Timestamp) return v.toDate();
+    if (v is DateTime) return v;
+    return DateTime.tryParse(v.toString()) ?? DateTime.now();
   }
 
   MessageModel copyWith({
-    String? messageId,
-    String? groupId,
-    String? senderId,
-    String? senderName,
-    String? senderRole,
-    MessageType? type,
-    String? content,
-    String? fileUrl,
-    bool? isEncrypted,
-    DateTime? createdAt,
-    List<String>? readBy,
-    DateTime? deletedAt,
+    String? text,
+    List<String>? deliveredTo,
+    List<String>? seenBy,
   }) {
     return MessageModel(
-      messageId: messageId ?? this.messageId,
-      groupId: groupId ?? this.groupId,
-      senderId: senderId ?? this.senderId,
-      senderName: senderName ?? this.senderName,
-      senderRole: senderRole ?? this.senderRole,
-      type: type ?? this.type,
-      content: content ?? this.content,
-      fileUrl: fileUrl ?? this.fileUrl,
-      isEncrypted: isEncrypted ?? this.isEncrypted,
-      createdAt: createdAt ?? this.createdAt,
-      readBy: readBy ?? this.readBy,
-      deletedAt: deletedAt ?? this.deletedAt,
+      id: id,
+      groupId: groupId,
+      senderId: senderId,
+      senderName: senderName,
+      senderRole: senderRole,
+      type: type,
+      text: text ?? this.text,
+      fileUrl: fileUrl,
+      fileName: fileName,
+      fileSize: fileSize,
+      thumbUrl: thumbUrl,
+      replyToMessageId: replyToMessageId,
+      replySnippet: replySnippet,
+      isEncrypted: isEncrypted,
+      restrictShare: restrictShare,
+      deliveredTo: deliveredTo ?? this.deliveredTo,
+      seenBy: seenBy ?? this.seenBy,
+      createdAt: createdAt,
+      deletedAt: deletedAt,
     );
   }
 }

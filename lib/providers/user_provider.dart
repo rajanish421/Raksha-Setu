@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../features/call/services/call_service.dart';
 import '../models/user_model.dart';
 
 class UserProvider extends ChangeNotifier {
@@ -12,7 +13,11 @@ class UserProvider extends ChangeNotifier {
 
   Future<void> loadUser() async {
     final authUser = FirebaseAuth.instance.currentUser;
+
     if (authUser == null) return;
+
+
+    // CallService.instance.listenIncomingCalls(user.userId);
 
     final doc = await _firestore.collection("users").doc(authUser.uid).get();
     if (!doc.exists) return;

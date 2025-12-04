@@ -11,6 +11,7 @@ class ChatMediaService {
   String get _cloudName => dotenv.env['CLOUDINARY_CLOUD_NAME'] ?? "";
   String get _uploadPreset => dotenv.env['CLOUDINARY_UPLOAD_PRESET'] ?? "";
 
+  // ---------------------- Upload Image ----------------------
   Future<String> uploadImage({
     required File file,
     required String groupId,
@@ -40,6 +41,7 @@ class ChatMediaService {
     return json['secure_url'];
   }
 
+  // ---------------------- Upload Document ----------------------
   Future<String> uploadDocument({
     required File file,
     required String groupId,
@@ -66,6 +68,11 @@ class ChatMediaService {
     }
 
     final json = jsonDecode(body);
-    return json['secure_url'];
+    return json["secure_url"];
+
+    // --- (Optional PDF Preview Fix) ---
+    // url = url.replaceFirst("/raw/upload/", "/raw/upload/fl_attachment:false/");
+    // url = "$url?inline=true&t=${DateTime.now().millisecondsSinceEpoch}";
+    // return url;
   }
 }
