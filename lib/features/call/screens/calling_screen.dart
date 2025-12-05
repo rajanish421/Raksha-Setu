@@ -28,15 +28,26 @@ class _CallingScreenState extends State<CallingScreen> {
     super.initState();
     CallAlertController.startAlert();
 
+
     subscription = FirebaseFirestore.instance
         .collection("active_calls")
         .doc(widget.callId)
         .snapshots()
         .listen((snap) {
-      if (snap.data()?["joinedCount"] != null && snap.data()?["joinedCount"] > 1) {
+      final data = snap.data();
+      if (data == null) return;
+
+      final active = data["active"] ?? true;
+      final joinedCount = data["joinedCount"] ?? 1;
+
+      if (!active) {
+        CallAlertController.stopAlert();
+        if (mounted) Navigator.pop(context);
+      } else if (joinedCount >= 2) {
         _joinCall();
       }
     });
+
 
     Future.delayed(const Duration(seconds: 30), () {
       if (mounted) Navigator.pop(context);

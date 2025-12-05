@@ -12,14 +12,16 @@ import 'utils/route_names.dart';
 import 'features/call/services/incoming_call_listener.dart';
 import 'providers/user_provider.dart';
 
-/// Global Navigator Key (needed so popup can appear anywhere)
+/// Global navigation key for incoming popup across entire app
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await dotenv.load(fileName: ".env");
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   runApp(
     MultiProvider(
@@ -44,10 +46,10 @@ class _DefenceAppState extends State<DefenceApp> {
   void initState() {
     super.initState();
 
-    /// 🔥 Start call listener ONLY IF user is logged in
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final user = FirebaseAuth.instance.currentUser;
+    /// 🔥 Listen for authentication changes (important)
+    FirebaseAuth.instance.authStateChanges().listen((user) {
       if (user != null) {
+        // Start listening for calls ONLY when the user is logged in.
         IncomingCallListener.start(navigatorKey);
       }
     });
@@ -56,7 +58,7 @@ class _DefenceAppState extends State<DefenceApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      navigatorKey: navigatorKey,   // 👈 Important
+      navigatorKey: navigatorKey, // required for popup anywhere
       title: 'Defence Connect',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,

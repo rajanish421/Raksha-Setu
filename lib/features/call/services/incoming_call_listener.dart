@@ -1,76 +1,60 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
-import '../screens/VideoCallScreen.dart';
 import '../screens/voice_call_screen.dart';
+import '../screens/VideoCallScreen.dart';
 import 'call_alert_controller.dart';
 
 class IncomingCallListener {
-  static bool _isDialogShown = false; // prevent repeat popup
-  static String? _lastCallId; // prevent reopening same call
+  static StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _sub;
+  static final Set<String> _shownCallIds = {};
 
-  /// Start global listener
   static void start(GlobalKey<NavigatorState> navKey) {
+    _sub?.cancel(); // avoid multiple listeners
+
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
-    FirebaseFirestore.instance
-        .collection("groups")
-        .where("members", arrayContains: uid)
+    _sub = FirebaseFirestore.instance
+        .collection("active_calls")
+        .where("participants", arrayContains: uid)
         .snapshots()
-        .listen((groupsSnapshot) {
-      if (groupsSnapshot.docs.isEmpty) return;
+        .listen((snapshot) {
+      if (snapshot.docs.isEmpty) return;
 
-      final groupIds = groupsSnapshot.docs.map((e) => e.id).toList();
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final callId = data["callId"] as String;
+        final active = data["active"] == true;
+        final startedBy = data["startedBy"] as String;
+        final type = data["type"] as String;
 
-      FirebaseFirestore.instance
-          .collection("active_calls")
-          .where("active", isEqualTo: true)
-          .snapshots()
-          .listen((callSnap) {
-        if (callSnap.docs.isEmpty) return;
-
-        final callData = callSnap.docs.first.data();
-
-        final callId = callData["callId"];
-        final groupId = callData["groupId"];
-        final startedBy = callData["startedBy"];
-        final callType = callData["type"]; // 👈 NEW
-
-        // only users from the same group should get popup
-        if (!groupIds.contains(groupId)) return;
-
-        // don't popup on caller device
-        if (startedBy == uid) return;
-
-        // avoid repeat dialogs for same call
-        if (_lastCallId == callId && _isDialogShown) return;
+        if (!active) continue;
+        if (startedBy == uid) continue;              // don't popup on caller
+        if (_shownCallIds.contains(callId)) continue;
 
         final context = navKey.currentContext;
         if (context == null) return;
 
-        _lastCallId = callId;
-        _isDialogShown = true;
-
-        CallAlertController.startAlert();  // 🔔 start ringtone
-
-
-        _showIncomingCallUI(context, callId, groupId, callType);
-      });
+        _shownCallIds.add(callId);
+        CallAlertController.startAlert();
+        _showDialog(context, callId, type);
+      }
     });
   }
 
-  /// Popup UI → Detects Voice or Video
-  static void _showIncomingCallUI(
-      BuildContext context, String callId, String groupId, String callType) {
-
-    final isVideo = callType == "group_video" || callType == "p2p_video";
+  static void _showDialog(
+      BuildContext context, String callId, String callType) {
+    final isVideo = callType.contains("video");
+    final isGroup = callType.startsWith("group_");
 
     showDialog(
       context: context,
       barrierDismissible: false,
       barrierColor: Colors.black.withOpacity(0.6),
-      builder: (context) => AlertDialog(
+      builder: (_) => AlertDialog(
         backgroundColor: Colors.black87,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         title: Text(
@@ -79,21 +63,20 @@ class IncomingCallListener {
         ),
         content: Text(
           isVideo
-              ? "A secure video call is active.\nJoin now?"
-              : "A secure voice call is active.\nJoin now?",
+              ? "A secure video call is incoming.\nJoin now?"
+              : "A secure voice call is incoming.\nJoin now?",
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () {
-              _isDialogShown = false;
-
               CallAlertController.stopAlert();
-
-
               Navigator.pop(context);
             },
-            child: const Text("Decline", style: TextStyle(color: Colors.redAccent)),
+            child: const Text(
+              "Decline",
+              style: TextStyle(color: Colors.redAccent),
+            ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
@@ -101,48 +84,30 @@ class IncomingCallListener {
               foregroundColor: Colors.black,
             ),
             onPressed: () {
-
               CallAlertController.stopAlert();
-
-
               Navigator.pop(context);
-              _isDialogShown = false;
 
-              // 👉 Route based on call type
               if (isVideo) {
-                _openVideo(context, callId);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        VideoCallScreen(callId: callId, isGroup: isGroup),
+                  ),
+                );
               } else {
-                _openVoice(context, callId);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        VoiceCallScreen(callId: callId, isGroup: isGroup),
+                  ),
+                );
               }
             },
             child: const Text("Join"),
           ),
         ],
-      ),
-    );
-  }
-
-  /// Route to screens
-  static void _openVoice(BuildContext context, String callId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => VoiceCallScreen(
-          callId: callId,
-          isGroup: true,
-        ),
-      ),
-    );
-  }
-
-  static void _openVideo(BuildContext context, String callId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => VideoCallScreen(
-          callId: callId,
-          isGroup: true,
-        ),
       ),
     );
   }

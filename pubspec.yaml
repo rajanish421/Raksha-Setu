@@ -56,7 +56,7 @@ dependencies:
   uuid: ^4.5.2
   zego_uikit_prebuilt_call: ^4.21.1
   zego_uikit_signaling_plugin: ^2.8.19
-  assets_audio_player: ^3.1.1
+#  assets_audio_player: ^3.1.1
   vibration: ^3.1.4
 
 dev_dependencies:
@@ -91,7 +91,7 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - .env
-    - ringtons/rington.mp3
+#    - assets/ringtos/rington.mp3
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -16,6 +16,7 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -403,6 +404,146 @@ class _ChatScreenState extends State<ChatScreen> {
     return null;
   }
 
+  Future<void> _openCallSheet({required bool isVideo}) async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+
+    // 1. get group members
+    final groupDoc = await FirebaseFirestore.instance
+        .collection("groups")
+        .doc(widget.groupId)
+        .get();
+
+    final groupData = groupDoc.data() ?? {};
+    final List<dynamic> membersRaw = groupData["members"] ?? [];
+    final List<String> memberIds =
+    membersRaw.map((e) => e.toString()).toList();
+
+    final otherIds = memberIds.where((m) => m != uid).toList();
+
+    // 2. get users info for 1-1 list
+    QuerySnapshot userSnap = otherIds.isEmpty
+        ? await FirebaseFirestore.instance
+        .collection("users")
+        .where("userId", isEqualTo: "__dummy__") // no result
+        .get()
+        : await FirebaseFirestore.instance
+        .collection("users")
+        .where("userId", whereIn: otherIds)
+        .get();
+
+    final users =
+    userSnap.docs.map((d) => d.data() as Map<String, dynamic>).toList();
+
+    if (!mounted) return;
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: Icon(
+                  isVideo ? Icons.groups_2 : Icons.group,
+                  color: Colors.white,
+                ),
+                title: Text(
+                  isVideo ? "Group video call" : "Group voice call",
+                  style: const TextStyle(color: Colors.white),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  if (isVideo) {
+                    CallService.instance.startGroupVideoCall(
+                      context: context,
+                      groupId: widget.groupId,
+                    );
+                  } else {
+                    CallService.instance.startGroupVoiceCall(
+                      context: context,
+                      groupId: widget.groupId,
+                    );
+                  }
+                },
+              ),
+              const Divider(color: Colors.white24),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 6),
+                child: Text(
+                  "Call member",
+                  style: TextStyle(color: Colors.white54, fontSize: 12),
+                ),
+              ),
+              if (users.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(12.0),
+                  child: Text(
+                    "No other members.",
+                    style: TextStyle(color: Colors.white54),
+                  ),
+                )
+              else
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: users.length,
+                    itemBuilder: (_, i) {
+                      final u = users[i];
+                      final id = u["userId"] as String;
+                      final name = (u["fullName"] ?? "Member") as String;
+
+                      return ListTile(
+                        leading: const CircleAvatar(
+                          child: Icon(Icons.person),
+                        ),
+                        title: Text(
+                          name,
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                        onTap: () {
+                          Navigator.pop(context);
+                          if (isVideo) {
+                            CallService.instance.startP2PVideoCall(
+                              context: context,
+                              groupId: widget.groupId,
+                              peerId: id,
+                            );
+                          } else {
+                            CallService.instance.startP2PVoiceCall(
+                              context: context,
+                              groupId: widget.groupId,
+                              peerId: id,
+                            );
+                          }
+                        },
+                      );
+                    },
+                  ),
+                ),
+              const SizedBox(height: 12),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+
 
 
   @override
@@ -424,91 +565,19 @@ class _ChatScreenState extends State<ChatScreen> {
           widget.groupName,
           style: const TextStyle(fontWeight: FontWeight.w700),
         ),
-
-        // added
-
         actions: [
-          // // GROUP VOICE CALL
-          // IconButton(
-          //   icon: const Icon(Icons.call),
-          //   tooltip: 'Start secure group voice call',
-          //   onPressed: () {
-          //     CallService.instance.startGroupVoiceCall(
-          //       context: context,
-          //       groupId: widget.groupId,
-          //     );
-          //   },
-          // ),
-          //
-          // // 1-1 VOICE CALL (last peer in this group)
-          // IconButton(
-          //   icon: const Icon(Icons.call_outlined),
-          //   tooltip: _lastPeerName == null
-          //       ? 'No peer yet'
-          //       : 'Call $_lastPeerName',
-          //   onPressed: _lastPeerId == null
-          //       ? null
-          //       : () {
-          //     CallService.instance.startP2PVoiceCall(
-          //       context: context,
-          //       groupId: widget.groupId,
-          //       peerId: _lastPeerId!,
-          //     );
-          //   },
-          // ),
-
-
-          // GROUP VOICE CALL
           IconButton(
             icon: const Icon(Icons.call),
-            onPressed: () {
-              CallService.instance.startGroupVoiceCall(
-                context: context,
-                groupId: widget.groupId,
-              );
-            },
+            onPressed: () => _openCallSheet(isVideo: false),
           ),
-
-// ONE-TO-ONE VOICE
-          IconButton(
-            icon: const Icon(Icons.call_outlined),
-            onPressed: _lastPeerId == null ? null : () {
-              CallService.instance.startP2PVoiceCall(
-                context: context,
-                groupId: widget.groupId,
-                peerId: _lastPeerId!,
-              );
-            },
-          ),
-
-// GROUP VIDEO CALL
           IconButton(
             icon: const Icon(Icons.videocam),
-            onPressed: () {
-              CallService.instance.startGroupVideoCall(
-                context: context,
-                groupId: widget.groupId,
-              );
-            },
+            onPressed: () => _openCallSheet(isVideo: true),
           ),
-
-// ONE-TO-ONE VIDEO CALL
-          IconButton(
-            icon: const Icon(Icons.videocam_outlined),
-            onPressed: _lastPeerId == null ? null : () {
-              CallService.instance.startP2PVideoCall(
-                context: context,
-                groupId: widget.groupId,
-                peerId: _lastPeerId!,
-              );
-            },
-          ),
-
-
         ],
-
-
       ),
+
+
 
       body: Column(
         children: [
