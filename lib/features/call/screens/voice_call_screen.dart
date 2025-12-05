@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:zego_uikit_prebuilt_call/zego_uikit_prebuilt_call.dart';
@@ -22,7 +23,26 @@ class VoiceCallScreen extends StatefulWidget {
 class _VoiceCallScreenState extends State<VoiceCallScreen> {
 
   @override
+  void initState() {
+    super.initState();
+    _markJoined();
+  }
+
+  Future<void> _markJoined() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    await FirebaseFirestore.instance
+        .collection("active_calls")
+        .doc(widget.callId)
+        .update({
+      "joined": FieldValue.arrayUnion([uid]),   // for missed-call logic
+    });
+  }
+
+  @override
   void dispose() {
+    // one of the participants will mark call as ended + compute missed users
     CallService.instance.endCall(widget.callId);
     super.dispose();
   }

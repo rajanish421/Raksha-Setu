@@ -16,6 +16,9 @@ class CallService {
     return _firestore.collection("active_calls").doc();
   }
 
+
+
+
   /// Fetch all member UIDs of a group
   Future<List<String>> _getGroupMembers(String groupId) async {
     final snap =
@@ -163,9 +166,24 @@ class CallService {
 
   // ---------- END CALL (for logs & to stop future popups) ----------
   Future<void> endCall(String callId) async {
-    await _firestore.collection("active_calls").doc(callId).update({
+    final docRef = _firestore.collection('active_calls').doc(callId);
+    final snap = await docRef.get();
+    if (!snap.exists) return;
+
+    final data = snap.data()!;
+    final List participants = (data['participants'] ?? []) as List;
+    final List joined = (data['joined'] ?? []) as List;
+
+    // users who never joined = missed
+    final List missed = participants
+        .where((p) => !joined.contains(p))
+        .toList();
+
+    await docRef.update({
       "active": false,
       "endedAt": FieldValue.serverTimestamp(),
+      "missed": missed,
     });
   }
+
 }

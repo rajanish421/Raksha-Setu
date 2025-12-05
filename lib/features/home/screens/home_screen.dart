@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:raksha_setu/test.dart';
 
 import '../../../constants/app_colors.dart';
+import '../../call/screens/call_history_screen.dart';
 import '../../call/services/call_service.dart';
 import '../../chat/screens/groups_list_screen.dart';
 class HomeScreen extends StatefulWidget {
@@ -40,7 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final List<Widget> _pages = [
     const Placeholder(), // Home Dashboard UI - Coming Step 8.4
     const GroupsListScreen(),
-    const Placeholder(),
+    const CallHistoryScreen(),
     const Placeholder()
     // const CallsScreen(),
     // const ProfileScreen(),
