@@ -1,10 +1,37 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../models/alert_model.dart';
 
-class AlertDetailsScreen extends StatelessWidget {
+class AlertDetailsScreen extends StatefulWidget {
   final AlertModel alert;
 
   const AlertDetailsScreen({super.key, required this.alert});
+
+  @override
+  State<AlertDetailsScreen> createState() => _AlertDetailsScreenState();
+}
+
+class _AlertDetailsScreenState extends State<AlertDetailsScreen> {
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    markAsRead(widget.alert.alertId);
+  }
+
+
+  Future<void> markAsRead(String alertId) async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+
+    await FirebaseFirestore.instance.collection("alerts").doc(alertId).update({
+      "readBy": FieldValue.arrayUnion([uid]),
+    });
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -15,22 +42,22 @@ class AlertDetailsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(alert.type.toUpperCase(),
+            Text(widget.alert.type.toUpperCase(),
                 style: const TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: Colors.redAccent)),
             const SizedBox(height: 10),
 
-            Text(alert.title,
+            Text(widget.alert.title,
                 style:
                 const TextStyle(fontSize: 18, fontWeight: FontWeight.w500)),
             const SizedBox(height: 20),
 
-            _info("Group", alert.groupName),
-            _info("Message", alert.message),
-            _info("Status", alert.status.toUpperCase()),
-            _info("Sender", "${alert.senderName} (${alert.senderRole})"),
+            _info("Group", widget.alert.groupName),
+            _info("Message", widget.alert.message),
+            _info("Status", widget.alert.status.toUpperCase()),
+            _info("Sender", "${widget.alert.senderName} (${widget.alert.senderRole})"),
 
             const SizedBox(height: 30),
             Center(

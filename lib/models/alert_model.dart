@@ -12,6 +12,9 @@ class AlertModel {
   final dynamic location;
   final dynamic timestamp;
 
+  /// 👇 NEW FIELD
+  final List<String> readBy;
+
   AlertModel({
     required this.alertId,
     required this.groupId,
@@ -25,6 +28,9 @@ class AlertModel {
     required this.status,
     this.location,
     this.timestamp,
+
+    /// 👇 Default Empty List
+    this.readBy = const [],
   });
 
   factory AlertModel.fromMap(String id, Map<String, dynamic> json) {
@@ -41,6 +47,27 @@ class AlertModel {
       status: json["status"] ?? "pending",
       location: json["location"],
       timestamp: json["timestamp"],
+
+      /// 👇 Read list if exists, else empty
+      readBy: List<String>.from(json["readBy"] ?? []),
     );
+  }
+
+  /// 👇 To save back to Firestore (optional use)
+  Map<String, dynamic> toMap() {
+    return {
+      "groupId": groupId,
+      "groupName": groupName,
+      "type": type,
+      "title": title,
+      "message": message,
+      "senderUid": senderUid,
+      "senderName": senderName,
+      "senderRole": senderRole,
+      "status": status,
+      "location": location,
+      "timestamp": timestamp,
+      "readBy": readBy,
+    };
   }
 }

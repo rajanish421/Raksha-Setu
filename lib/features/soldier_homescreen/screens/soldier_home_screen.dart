@@ -200,6 +200,7 @@
 //
 
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -281,6 +282,26 @@ class _SoldierHomeScreenState extends State<SoldierHomeScreen> {
     });
   }
 
+
+  Stream<int> unreadCountStream() {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+
+    return FirebaseFirestore.instance
+        .collection("alerts")
+        .where("readBy", arrayContains: uid) // Alerts read by soldier
+        .snapshots()
+        .map((snapRead) async {
+      final allAlerts = await FirebaseFirestore.instance.collection("alerts").get();
+
+      return allAlerts.docs.where((doc) {
+        final readList = (doc.data()["readBy"] ?? []) as List;
+        return !readList.contains(uid); // unread
+      }).length;
+    }).asyncMap((event) async => await event);
+  }
+
+
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<UserProvider>();
@@ -316,23 +337,50 @@ class _SoldierHomeScreenState extends State<SoldierHomeScreen> {
                     children: [
                       const Icon(Icons.warning_amber_outlined, size: 32, color: Colors.redAccent),
                       const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text("Alerts", style: Theme.of(context).textTheme.titleLarge),
-                          Text(
-                            "$alertTotal Total • $alertPending Pending",
-                            style: const TextStyle(color: Colors.white70),
-                          ),
-                        ],
+
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Alerts", style: Theme.of(context).textTheme.titleLarge),
+                            Text(
+                              "Tap to view recent alerts",
+                              style: const TextStyle(color: Colors.white70, fontSize: 12),
+                            ),
+                          ],
+                        ),
                       ),
-                      const Spacer(),
+
+                      // 🔥 REALTIME BADGE
+                      StreamBuilder<int>(
+                        stream: unreadCountStream(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData || snapshot.data == 0) {
+                            return const SizedBox();
+                          }
+
+                          return Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              "${snapshot.data}",
+                              style: const TextStyle(fontSize: 12, color: Colors.white),
+                            ),
+                          );
+                        },
+                      ),
+
+                      const SizedBox(width: 10),
                       const Icon(Icons.arrow_forward_ios, size: 18, color: Colors.white54),
                     ],
                   ),
                 ),
               ),
             ),
+
 
             const SizedBox(height: 22),
 
