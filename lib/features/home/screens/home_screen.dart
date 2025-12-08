@@ -8,6 +8,7 @@ import '../../call/screens/call_history_screen.dart';
 import '../../call/services/call_service.dart';
 import '../../chat/screens/groups_list_screen.dart';
 import '../../profile/screens/profile_screen.dart';
+import '../../soldier_homescreen/screens/soldier_home_screen.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -40,7 +41,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   final List<Widget> _pages = [
-    const Placeholder(), // Home Dashboard UI - Coming Step 8.4
+    const SoldierHomeScreen(), // Home Dashboard UI - Coming Step 8.4
     const GroupsListScreen(),
     const CallHistoryScreen(),
     const ProfileScreen()
