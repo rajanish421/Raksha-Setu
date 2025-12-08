@@ -58,6 +58,15 @@ dependencies:
   zego_uikit_signaling_plugin: ^2.8.19
 #  assets_audio_player: ^3.1.1
   vibration: ^3.1.4
+  firebase_messaging: ^16.0.4
+  flutter_local_notifications: ^19.5.0
+  awesome_notifications: ^0.10.1
+  no_screenshot: ^0.3.1
+  open_filex: ^4.7.0
+  dio: ^5.9.0
+  flutter_pdfview: ^1.4.3
+#  flutter_secure_screen: ^0.0.1
+#  flutter_windowmanager: ^0.2.0
 
 dev_dependencies:
   flutter_test:

@@ -7,6 +7,7 @@ import '../../../constants/app_colors.dart';
 import '../../call/screens/call_history_screen.dart';
 import '../../call/services/call_service.dart';
 import '../../chat/screens/groups_list_screen.dart';
+import '../../profile/screens/profile_screen.dart';
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -42,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
     const Placeholder(), // Home Dashboard UI - Coming Step 8.4
     const GroupsListScreen(),
     const CallHistoryScreen(),
-    const Placeholder()
+    const ProfileScreen()
     // const CallsScreen(),
     // const ProfileScreen(),
   ];

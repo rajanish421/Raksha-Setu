@@ -307,3 +307,304 @@ class SimpleTicker {
     stop();
   }
 }
+
+// without logout button.
+
+
+//
+// import 'package:flutter/material.dart';
+// import 'package:provider/provider.dart';
+// import 'package:firebase_auth/firebase_auth.dart';
+//
+// import '../../../custom_widgets/primary_button.dart';
+// import '../../../providers/user_provider.dart';
+// import '../../../utils/route_names.dart';
+// import '../services/auth_service.dart';
+// import '../services/firebase_otp_service.dart';
+// import '../services/otp_service.dart';
+//
+// class OtpVerificationScreen extends StatefulWidget {
+//   String verificationId;
+//   final String phone;
+//
+//   OtpVerificationScreen({
+//     super.key,
+//     required this.verificationId,
+//     required this.phone,
+//   });
+//
+//   @override
+//   State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
+// }
+//
+// class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
+//   final _otpControllers =
+//   List.generate(6, (_) => TextEditingController(), growable: false);
+//
+//   final _focusNodes =
+//   List.generate(6, (_) => FocusNode(), growable: false);
+//
+//   bool _isLoading = false;
+//   int _secondsRemaining = 60;
+//   bool _canResend = false;
+//
+//   late final SimpleTicker _ticker;
+//   final OtpService _otpService = FirebaseOtpService();
+//
+//   @override
+//   void initState() {
+//     super.initState();
+//     _startTimer();
+//   }
+//
+//   void _startTimer() {
+//     _secondsRemaining = 60;
+//     _canResend = false;
+//     _ticker = SimpleTicker((elapsed) {
+//       final seconds = 60 - elapsed.inSeconds;
+//       if (seconds <= 0) {
+//         _ticker.stop();
+//         if (mounted) {
+//           setState(() {
+//             _secondsRemaining = 0;
+//             _canResend = true;
+//           });
+//         }
+//       } else {
+//         if (mounted) {
+//           setState(() => _secondsRemaining = seconds);
+//         }
+//       }
+//     })..start();
+//   }
+//
+//   @override
+//   void dispose() {
+//     for (final c in _otpControllers) {
+//       c.dispose();
+//     }
+//     for (final f in _focusNodes) {
+//       f.dispose();
+//     }
+//     _ticker.dispose();
+//     super.dispose();
+//   }
+//
+//   Future<void> _onVerifyPressed() async {
+//     final otp = _otpControllers.map((c) => c.text.trim()).join();
+//     if (otp.length != 6) {
+//       _showMsg("Please enter the 6-digit OTP");
+//       return;
+//     }
+//
+//     setState(() => _isLoading = true);
+//
+//     try {
+//       // 🔐 Verify OTP
+//       await _otpService.verifyOtp(
+//         verificationId: widget.verificationId,
+//         smsCode: otp,
+//       );
+//
+//       // 🔁 Refresh Firebase auth identity
+//       await FirebaseAuth.instance.currentUser?.reload();
+//       await Future.delayed(const Duration(milliseconds: 300));
+//
+//       // 🧠 Fetch Firestore user profile
+//       final user = await AuthService.instance.getCurrentUserProfile();
+//
+//       if (user == null) {
+//         throw Exception("User session not found. Please login again.");
+//       }
+//
+//       if (!mounted) return;
+//
+//       // Update Provider Data
+//       await Provider.of<UserProvider>(context, listen: false).loadUser();
+//
+//       // 🎯 Navigate based on approval state
+//       if (user.status == "approved") {
+//         Navigator.pushNamedAndRemoveUntil(
+//           context,
+//           RouteNames.home,
+//               (_) => false,
+//         );
+//       } else {
+//         Navigator.pushNamedAndRemoveUntil(
+//           context,
+//           RouteNames.pendingApproval,
+//               (_) => false,
+//         );
+//       }
+//
+//     } catch (e) {
+//       _showMsg(e.toString().replaceAll("Exception:", "").trim());
+//     } finally {
+//       if (mounted) setState(() => _isLoading = false);
+//     }
+//   }
+//
+//   Future<void> _onResendPressed() async {
+//     if (!_canResend) return;
+//
+//     try {
+//       final newVerificationId = await _otpService.sendOtp(
+//         phoneNumber: widget.phone,
+//       );
+//
+//       // 🔥 Replace verification id
+//       setState(() {
+//         widget.verificationId = newVerificationId;
+//         _secondsRemaining = 60;
+//         _canResend = false;
+//       });
+//
+//       _ticker.reset();
+//       _ticker.start();
+//
+//       _showMsg("OTP resent to ${widget.phone}");
+//
+//     } catch (e) {
+//       _showMsg("Failed to resend OTP. Try again.");
+//     }
+//   }
+//
+//   void _showMsg(String msg) {
+//     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+//   }
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final textTheme = Theme.of(context).textTheme;
+//     final phoneLabel = widget.phone;
+//
+//     return Scaffold(
+//       appBar: AppBar(title: const Text("Verify OTP")),
+//       body: SafeArea(
+//         child: Padding(
+//           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+//           child: Column(
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               Text("Verify your identity", style: textTheme.headlineSmall),
+//               const SizedBox(height: 8),
+//               Text(
+//                 "We've sent a 6-digit code to:\n$phoneLabel",
+//                 style: textTheme.bodyMedium,
+//               ),
+//               const SizedBox(height: 32),
+//
+//               Row(
+//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                 children: List.generate(
+//                   6,
+//                       (index) => _OtpBox(
+//                     controller: _otpControllers[index],
+//                     focusNode: _focusNodes[index],
+//                     onChanged: (value) {
+//                       if (value.isNotEmpty && index < 5) {
+//                         _focusNodes[index + 1].requestFocus();
+//                       } else if (value.isEmpty && index > 0) {
+//                         _focusNodes[index - 1].requestFocus();
+//                       }
+//                     },
+//                   ),
+//                 ),
+//               ),
+//
+//               const SizedBox(height: 24),
+//               Row(
+//                 children: [
+//                   if (_secondsRemaining > 0)
+//                     Text(
+//                       "Resend OTP in 00:${_secondsRemaining.toString().padLeft(2, '0')}",
+//                       style: textTheme.bodyMedium,
+//                     )
+//                   else
+//                     TextButton(
+//                       onPressed: _canResend ? _onResendPressed : null,
+//                       child: const Text("Resend OTP"),
+//                     ),
+//                 ],
+//               ),
+//
+//               const Spacer(),
+//
+//               PrimaryButton(
+//                 label: "Verify & Continue",
+//                 onPressed: _onVerifyPressed,
+//                 isLoading: _isLoading,
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+//
+// class _OtpBox extends StatelessWidget {
+//   final TextEditingController controller;
+//   final FocusNode focusNode;
+//   final ValueChanged<String> onChanged;
+//
+//   const _OtpBox({
+//     required this.controller,
+//     required this.focusNode,
+//     required this.onChanged,
+//   });
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     return SizedBox(
+//       width: 45,
+//       child: TextField(
+//         controller: controller,
+//         focusNode: focusNode,
+//         keyboardType: TextInputType.number,
+//         maxLength: 1,
+//         textAlign: TextAlign.center,
+//         style: Theme.of(context).textTheme.headlineSmall,
+//         decoration: const InputDecoration(counterText: ''),
+//         onChanged: onChanged,
+//       ),
+//     );
+//   }
+// }
+//
+// /// Simple timer helper
+// class SimpleTicker {
+//   final void Function(Duration elapsed) _onTick;
+//   late final Stopwatch _stopwatch;
+//   final Duration _tickInterval;
+//   bool _running = false;
+//
+//   SimpleTicker(this._onTick, {Duration tickInterval = const Duration(seconds: 1)})
+//       : _tickInterval = tickInterval {
+//     _stopwatch = Stopwatch();
+//   }
+//
+//   void start() {
+//     if (_running) return;
+//     _running = true;
+//     _stopwatch.start();
+//     _tick();
+//   }
+//
+//   void _tick() async {
+//     while (_running) {
+//       await Future.delayed(_tickInterval);
+//       if (!_running) break;
+//       _onTick(_stopwatch.elapsed);
+//     }
+//   }
+//
+//   void reset() => _stopwatch.reset();
+//
+//   void stop() {
+//     _running = false;
+//     _stopwatch.stop();
+//   }
+//
+//   void dispose() => stop();
+// }

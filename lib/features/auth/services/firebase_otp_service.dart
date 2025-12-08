@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import 'otp_service.dart';
 
 class FirebaseOtpService implements OtpService {
@@ -38,31 +37,79 @@ class FirebaseOtpService implements OtpService {
     return completer.future;
   }
 
-  @override
-  Future<void> verifyOtp({
-    required String verificationId,
-    required String smsCode,
-  }) async {
-    final credential = PhoneAuthProvider.credential(
-      verificationId: verificationId,
-      smsCode: smsCode,
-    );
 
-    final currentUser = _auth.currentUser;
+  // without logout
 
-    try {
-      if (currentUser != null) {
-        // Link phone credential to the existing user (for stronger security)
-        await currentUser.linkWithCredential(credential);
-      } else {
-        // Fallback: sign in with phone (should not normally happen in our flow)
-        await _auth.signInWithCredential(credential);
-      }
-    } on FirebaseAuthException catch (e) {
-      // If already linked, we can ignore that specific error
-      if (e.code != 'provider-already-linked') {
+  // @override
+  // Future<void> verifyOtp({
+  //   required String verificationId,
+  //   required String smsCode,
+  // }) async {
+  //   final credential = PhoneAuthProvider.credential(
+  //     verificationId: verificationId,
+  //     smsCode: smsCode,
+  //   );
+  //
+  //   final currentUser = _auth.currentUser;
+  //
+  //   try {
+  //     if (currentUser != null) {
+  //       // Link phone credential to the existing user (for stronger security)
+  //       await currentUser.linkWithCredential(credential);
+  //     } else {
+  //       // Fallback: sign in with phone (should not normally happen in our flow)
+  //       await _auth.signInWithCredential(credential);
+  //     }
+  //   } on FirebaseAuthException catch (e) {
+  //     print(
+  //         "===================================================================================");
+  //     print(e.toString());
+  //     // If already linked, we can ignore that specific error
+  //     if (e.code != 'provider-already-linked') {
+  //       rethrow;
+  //     }
+  //   }
+
+
+    // }
+    //
+
+    @override
+    Future<void> verifyOtp({
+      required String verificationId,
+      required String smsCode,
+    }) async {
+      final credential = PhoneAuthProvider.credential(
+        verificationId: verificationId,
+        smsCode: smsCode,
+      );
+
+      final currentUser = _auth.currentUser;
+
+      try {
+        if (currentUser != null) {
+          // Try linking OTP to logged-in account
+          await currentUser.linkWithCredential(credential);
+        } else {
+          // First time login using OTP
+          await _auth.signInWithCredential(credential);
+        }
+
+      } on FirebaseAuthException catch (e) {
+
+        print("OTP ERROR: ${e.code}");
+
+        // 👇 KEY PART: Skip OTP if already verified before
+        if (e.code == 'provider-already-linked') {
+          print("🔁 OTP already verified — skipping verification.");
+          return; // <-- treat as success
+        }
+
+        // Other OTP/Mobile errors must still fail
         rethrow;
       }
-    }
+
+
+
   }
 }

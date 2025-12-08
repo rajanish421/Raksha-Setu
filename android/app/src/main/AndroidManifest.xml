@@ -1,14 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     package="com.example.raksha_setu">
 
-    <!-- Features -->
-    <uses-feature
-        android:name="android.hardware.camera"
-        android:required="false" />
-
-    <uses-feature
-        android:name="android.hardware.microphone"
-        android:required="false" />
+    <!-- Hardware features -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
 
     <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -21,39 +17,32 @@
     <uses-permission android:name="android.permission.CAMERA" />
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.VIBRATE"/>
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY"/>
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
-    <!--for bring app to foreground from background in Android 10 -->
+    <!-- Required for full-screen incoming call UI -->
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
 
-
-    <!-- 👇 NEW REQUIRED -->
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
-
+    <!-- Needed for background ringtone + call service -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
     <application
-        android:label="raksha_setu"
+        android:label="Raksha Setu"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTop"
-
+            android:launchMode="singleTask"
+            android:theme="@style/LaunchTheme"
             android:supportsPictureInPicture="true"
             android:resizeableActivity="true"
-
             android:taskAffinity=""
-            android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
-
-
 
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
@@ -71,9 +60,16 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
+        <!-- 🔥 Foreground Service for incoming call ringtone -->
+        <service
+            android:name="com.dexterous.flutterlocalnotifications.ForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection|camera|microphone"
+            tools:ignore="MissingClass" />
+
     </application>
 
-    <!-- Required for text processing -->
+    <!-- Required for Android inline text actions -->
     <queries>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
