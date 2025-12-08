@@ -26,7 +26,10 @@ Future<void> main() async {
   // await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
   // await FlutterSecureScreen.singleton.setAndroidScreenSecure(false);
 
-  await _noScreenshot.screenshotOff();
+  // await _noScreenshot.screenshotOff(); ---- block screenshot
+
+  await _noScreenshot.screenshotOn();
+
 
   await dotenv.load(fileName: ".env");
 
