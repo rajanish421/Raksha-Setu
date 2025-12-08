@@ -8,5 +8,8 @@ class RouteNames {
   static const String otpVerification = '/otp-verification';
   static const String home = '/home'; // later: groups list
   static const String pendingApproval = '/pending-approval';
+  static const String alert = '/alert';
+
+
 
 }

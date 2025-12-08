@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:raksha_setu/features/home/screens/home_screen.dart';
+import 'package:raksha_setu/features/soldier_homescreen/screens/alert_screen.dart';
 import '../features/auth/screens/login_screen.dart';
 import '../features/auth/screens/otp_verification_screen.dart';
 import '../features/auth/screens/pending_approval_screen.dart';
@@ -27,6 +28,11 @@ class AppRouter {
 
       case RouteNames.home:
         return _buildRoute(const HomeScreen(), settings);
+
+
+      case RouteNames.alert:
+        return _buildRoute(const SoldierAlertScreen(), settings);
+
 
       case RouteNames.otpVerification:
         final args = settings.arguments as Map<String, dynamic>?;
