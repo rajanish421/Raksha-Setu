@@ -1,5 +1,5 @@
 class UserModel {
-  final String userId;             // Firebase Auth UID
+  final String userId;
   final String fullName;
   final String phone;
   final String role;               // soldier | family | veteran | admin | superAdmin
@@ -12,7 +12,7 @@ class UserModel {
 
   // Family
   final String? referenceServiceNumber;
-  final String? relationship;      // spouse, father, mother, child, etc.
+  final String? relationship;
 
   // Uploads
   final String selfieUrl;
@@ -21,6 +21,10 @@ class UserModel {
   // Timestamps
   final DateTime createdAt;
   final DateTime? approvedAt;
+
+  // 🟢 NEW FIELDS
+  final bool isActive;
+  final DateTime? lastSeen;
 
   const UserModel({
     required this.userId,
@@ -37,6 +41,10 @@ class UserModel {
     required this.documentUrl,
     required this.createdAt,
     this.approvedAt,
+
+    // NEW
+    required this.isActive,
+    this.lastSeen,
   });
 
   /// Convert to JSON for Firestore
@@ -56,6 +64,10 @@ class UserModel {
       'documentUrl': documentUrl,
       'createdAt': createdAt.toIso8601String(),
       'approvedAt': approvedAt?.toIso8601String(),
+
+      // NEW
+      'isActive': isActive,
+      'lastSeen': lastSeen?.toIso8601String(),
     };
   }
 
@@ -77,6 +89,12 @@ class UserModel {
       createdAt: DateTime.parse(map['createdAt']),
       approvedAt: map['approvedAt'] != null
           ? DateTime.parse(map['approvedAt'])
+          : null,
+
+      // NEW
+      isActive: map['isActive'] ?? false,
+      lastSeen: map['lastSeen'] != null
+          ? DateTime.parse(map['lastSeen'])
           : null,
     );
   }

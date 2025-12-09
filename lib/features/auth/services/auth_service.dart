@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../log_service.dart';
 import '../../../models/user_model.dart';
+import '../../status/active_user_service.dart';
 
 
 class AuthService {
@@ -89,6 +90,7 @@ class AuthService {
         documentUrl: documentUrl,
         createdAt: DateTime.now().toUtc(),
         approvedAt: null,
+        isActive: false,
       );
 
       // 3. Save to Firestore
@@ -256,6 +258,8 @@ class AuthService {
     } catch (_) {}
 
     await _auth.signOut();
+
+    await ActiveUserService.instance.markOffline();  // 👈 mark user inactive
   }
 
 }

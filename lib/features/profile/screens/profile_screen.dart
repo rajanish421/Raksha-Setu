@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../providers/user_provider.dart';
 import '../../../utils/route_names.dart';
 import '../../auth/services/auth_service.dart';
+import '../../status/active_user_service.dart';
 import 'image_viewer_screen.dart';
  import 'package:dio/dio.dart';
 
@@ -83,6 +84,8 @@ class ProfileScreen extends StatelessWidget {
 
     // Sign out Firebase completely
     await AuthService.instance.signOut();
+
+    await ActiveUserService.instance.markOffline();  // 👈 mark user inactive
 
     // Clear your local state provider (important)
     final userProvider = Provider.of<UserProvider>(context, listen: false);

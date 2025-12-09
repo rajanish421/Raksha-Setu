@@ -9,6 +9,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'constants/app_theme.dart';
 import 'features/call/services/call_notification_service.dart';
 import 'features/call/services/local_notification_service.dart';
+import 'features/status/active_user_service.dart';
 import 'firebase_options.dart';
 import 'utils/app_router.dart';
 import 'utils/route_names.dart';
@@ -64,6 +65,10 @@ class _DefenceAppState extends State<DefenceApp> {
   @override
   void initState() {
     super.initState();
+
+
+    // Start tracking active state
+    ActiveUserService.instance.initialize();
 
     /// 🔥 Listen for authentication changes (important)
     FirebaseAuth.instance.authStateChanges().listen((user) {

@@ -57,6 +57,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../../constants/app_colors.dart';
 import '../../../utils/route_names.dart';
+import '../../status/active_user_service.dart';
 
 class PendingApprovalScreen extends StatefulWidget {
   const PendingApprovalScreen({super.key});
@@ -211,6 +212,9 @@ class _PendingApprovalScreenState extends State<PendingApprovalScreen> {
                   label: const Text("Logout", style: TextStyle(color: Colors.red)),
                   onPressed: () async {
                     await FirebaseAuth.instance.signOut();
+
+                    await ActiveUserService.instance.markOffline();  // 👈 mark user inactive
+
                     if (context.mounted) {
                       Navigator.pushNamedAndRemoveUntil(context, RouteNames.login, (_) => false);
                     }
