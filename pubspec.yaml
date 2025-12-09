@@ -65,6 +65,8 @@ dependencies:
   open_filex: ^4.7.0
   dio: ^5.9.0
   flutter_pdfview: ^1.4.3
+  lottie: ^3.3.2
+  local_auth: ^3.0.0
 #  flutter_secure_screen: ^0.0.1
 #  flutter_windowmanager: ^0.2.0
 
